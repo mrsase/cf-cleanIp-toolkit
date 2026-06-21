@@ -15,6 +15,8 @@ venv/
 # Project-specific
 /tmp/
 /release/
+/data/ip.txt
+/data/ipv6.txt
 /exports/*.json
 /exports/*.csv
 /exports/*.txt
@@ -25,5 +27,3 @@ venv/
 /db/clean_ips.db
 /db/clean_ips.db-wal
 /db/clean_ips.db-shm
-/data/ip.txt
-/data/ipv6.txt

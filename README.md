@@ -2,67 +2,71 @@
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Go](https://img.shields.io/badge/CFST-v2.3.5-00ADD8?logo=go)]()
-[![Go](https://img.shields.io/badge/SenPaiScanner-v0.5.0-00ADD8?logo=go)]()
 
-**tunnel** scans Cloudflare's edge network from your location, finds the lowest-latency / most responsive IPs, and stores every measurement in a local SQLite database. Query the best IPs at any time, export them, and track performance trends over days and weeks.
+**tunnel** scans Cloudflare's edge network from your location, finds the
+lowest-latency / most responsive IPs, and stores every measurement in a
+local SQLite database so you can query, export, and track performance
+trends over days and weeks.
 
-Two battle-tested scanner engines are bundled:
-
-| Engine | Mode | Best for |
-|--------|------|----------|
-| **CloudflareSpeedTest** ([XIU2](https://github.com/XIU2/CloudflareSpeedTest) v2.3.5) | Headless CLI | Scheduled scans, scripting, CI/CD |
-| **SenPaiScanner** ([MatinSenPai](https://github.com/MatinSenPai/SenPaiScanner) v0.5.0) | Interactive TUI | Hands-on exploration, custom configs |
-
----
-
-## Features
-
-- **Dual-engine** — automated batch scanning + interactive TUI exploration
-- **SQLite-backed** — all results persisted and queryable
-- **Trend analysis** — track IP performance over days/weeks with `history`
-- **Export** — best IPs to JSON, CSV, or plain text
-- **Scheduling** — built-in `launchd` integration for daily macOS scans
-- **Cross-platform** — macOS (arm64/amd64) and Linux (arm64/amd64/386)
-- **Zero configuration** — scan right after install; no API keys needed
-
----
+```
+                         ┌─────────────────┐
+                         │   Cloudflare     │
+                         │   Edge Network   │
+                         └────────┬────────┘
+                                  │ probes
+                         ┌────────▼────────┐
+                         │    tunnel       │
+                         │  (this project) │
+                         └──┬──────┬───────┘
+                            │      │
+                    ┌───────▼┐  ┌──▼────────┐
+                    │ cfst   │  │ SenPai    │
+                    │ (batch)│  │ (interact)│
+                    └───┬────┘  └─────┬─────┘
+                        │             │
+                        ▼             ▼
+                    ┌──────────────────────┐
+                    │   SQLite Database    │
+                    │   (db/clean_ips.db)  │
+                    └──────────┬───────────┘
+                               │
+                    ┌──────────▼───────────┐
+                    │  tunnel top / export │
+                    │  tunnel history      │
+                    └──────────────────────┘
+```
 
 ## Installation
 
-### Quick install (recommended)
+### Option A — Download a release (recommended)
+
+Grab the tarball for your platform from the
+[Releases page](https://github.com/<your-org>/tunnel/releases), then:
+
+```bash
+tar -xzf tunnel-<your-os>-<your-arch>.tar.gz
+cd tunnel-<your-os>-<your-arch>
+./install.sh
+```
+
+The tarball comes with pre-compiled binaries — no Go toolchain needed.
+
+### Option B — Build from source
 
 ```bash
 git clone https://github.com/<your-org>/tunnel.git
 cd tunnel
-./install.sh
+./install.sh           # compiles cfst + senpaiscanner from upstream source
 ```
 
-The installer will:
-1. Detect your OS and CPU architecture
-2. Download the correct scanner binaries
-3. Fetch the latest Cloudflare IP ranges
-4. Initialize the SQLite database
-5. Optionally add `tunnel` to your `PATH`
-
-### Manual install
-
-```bash
-# Download binaries for your platform
-make build
-
-# Or fetch IP ranges manually
-./tunnel update ranges
-
-# Create the database
-sqlite3 db/clean_ips.db < scripts/schema.sql
-```
+Requires [Go](https://go.dev/doc/install) 1.21+. The installer auto-detects
+your OS/arch, clones the upstream scanner repos, and compiles them.
 
 ### Dependencies
 
-- **Python 3** — for database ingestion, querying, and export scripts
-- **SQLite 3** — local data store
-- **curl** or **wget** — for downloading binaries and IP ranges
+- **Python 3** — for data ingestion, querying, and export
+- **SQLite 3** — embedded database
+- **curl** — for downloading IP ranges
 
 ---
 
@@ -71,72 +75,44 @@ sqlite3 db/clean_ips.db < scripts/schema.sql
 ### Scanning
 
 ```bash
-# Quick TCPing scan (recommended for most users)
-./tunnel scan
-
-# HTTP latency scan (more realistic for proxy use)
-./tunnel scan --httping
-
-# Fast filter (no download speed test)
-./tunnel scan --fast
-
-# IPv6 scan
-./tunnel scan --ipv6
-
-# Custom CFST flags
-./tunnel scan -- -n 500 -tl 150 -sl 5 -dn 20
-
-# Interactive TUI scanner
-./tunnel senpai
+./tunnel scan                  # TCPing scan (recommended default)
+./tunnel scan --httping        # HTTP latency scan (more realistic)
+./tunnel scan --fast           # Quick filter, no download test
+./tunnel scan --ipv6           # IPv6 ranges
+./tunnel scan -- -n 500 -tl 150    # Custom CFST flags
+./tunnel senpai                # Interactive TUI scanner
 ```
 
-### Querying results
+### Query & export
 
 ```bash
-# Top 10 best IPs (IPv4, last 14 days)
-./tunnel top
+./tunnel top                              # Top 10 (IPv4, 14 days)
+./tunnel top -n 50 --max-latency 120      # Filtered
+./tunnel top --family 6 -n 20             # IPv6 only
+./tunnel top --raw -n 30 > /tmp/ips.txt   # Plain IP list
 
-# Top 50, with filters
-./tunnel top -n 50 --max-latency 120 --min-speed 5
-
-# Top IPv6 only
-./tunnel top --family 6 -n 20
-
-# Raw IP list (one per line, for piping)
-./tunnel top --raw -n 30 > /tmp/best.txt
-```
-
-### Exporting
-
-```bash
 ./tunnel export -n 100 --format json
-./tunnel export -n 50  --format txt -o /tmp/cf.txt
-./tunnel export -n 200 --format csv
+./tunnel export -n 50 --format txt -o /tmp/out.txt
 ```
 
-### System management
+### System
 
 ```bash
-./tunnel status          # one-page system overview
-./tunnel history         # last 10 scans + DB stats
-./tunnel history --scan 3  # rows from scan ID 3
-./tunnel update ranges   # refresh Cloudflare IP range files
+./tunnel status                # One-page overview
+./tunnel history               # Last 10 scans + DB stats
+./tunnel history --scan 3      # Rows from scan ID 3
+./tunnel update ranges         # Refresh Cloudflare IP ranges
+./tunnel version               # Version info
 ```
 
 ### Scheduling (macOS)
 
-A `launchd` agent runs the scheduled scan every day at 04:17.
-
 ```bash
-./tunnel install         # load the daily agent
-./tunnel install unload  # uninstall the agent
+./tunnel install               # Load daily launchd agent (04:17)
+./tunnel install unload        # Unload the agent
 ```
 
-Default scheduled scan: HTTPing, latency ≤ 250 ms, loss ≤ 0.3, 3 download samples, top 20 results.
-
-### Ingesting external CSVs
-
-If you run SenPaiScanner manually (or any CFST-compatible scanner):
+### Ingest external CSVs
 
 ```bash
 ./tunnel ingest results/senpai/senpai_<ts>.csv --engine senpai
@@ -149,31 +125,17 @@ If you run SenPaiScanner manually (or any CFST-compatible scanner):
 
 **Location:** `db/clean_ips.db` (SQLite, WAL mode)
 
-### Schema
-
-| Table | Description |
-|-------|-------------|
-| `scans` | One row per scan run (engine, mode, args, CSV path, IP count, status, timing) |
-| `clean_ips` | One row per IP measurement (IP, family, loss, latency, speed, colo, timestamp) |
-
-### Views
-
-| View | Description |
-|------|-------------|
+| Table / View | Description |
+|---|---|
+| `scans` | One row per scan run |
+| `clean_ips` | One row per IP measurement |
 | `latest_per_ip` | Most recent measurement per IP |
-| `best_recent` | Aggregated stats per IP over the last 14 days |
-
-### Ad-hoc queries
+| `best_recent` | Aggregated stats over the last 14 days |
 
 ```bash
-sqlite3 db/clean_ips.db
-
-# Best IPs by latency in the last 3 days
-SELECT ip, MIN(latency_ms), AVG(speed_mbps)
-FROM clean_ips
-WHERE measured_at > datetime('now', '-3 days')
-GROUP BY ip
-ORDER BY 2 LIMIT 30;
+sqlite3 db/clean_ips.db "SELECT ip, MIN(latency_ms), AVG(speed_mbps)
+  FROM clean_ips WHERE measured_at > datetime('now','-3 days')
+  GROUP BY ip ORDER BY 2 LIMIT 30;"
 ```
 
 ---
@@ -182,75 +144,87 @@ ORDER BY 2 LIMIT 30;
 
 ```
 tunnel/
-├── tunnel                  # Main CLI dispatcher
-├── install.sh              # Install script
-├── Makefile                # Build / release / lint targets
+├── tunnel                  # CLI dispatcher
+├── install.sh              # Installer (download or compile)
+├── Makefile                # build / release / lint / check
 ├── VERSION                 # Current version
-├── bin/                    # Scanner binaries (downloaded by install)
+├── LICENSE                 # MIT
+├── bin/                    # Scanner binaries
 ├── scripts/
+│   ├── build-scanners.sh   # Compile cfst + senpai from source
 │   ├── scan.sh             # CFST scan wrapper
 │   ├── scheduled_scan.sh   # launchd daily scan
 │   ├── senpai.sh           # SenPaiScanner launcher
 │   ├── store.py            # CSV → SQLite ingestion
 │   ├── top.py              # Best-IP queries
 │   ├── export.py           # Export to JSON/CSV/TXT
-│   ├── history.py          # Scan history & DB stats
+│   ├── history.py          # Scan history & stats
 │   ├── schema.sql          # Database schema
 │   ├── update-ranges.sh    # Refresh CF IP range files
-│   └── prepare-release.sh  # Cross-platform release builds
+│   └── version.sh          # Version info
 ├── data/                   # Cloudflare IP ranges (v4/v6)
 ├── db/                     # SQLite database
+├── launchd/                # macOS launchd plist
 ├── exports/                # Exported IP lists
 ├── results/cfst/           # Raw CFST scan CSVs
 ├── results/senpai/         # Raw SenPaiScanner CSVs
-├── logs/                   # Scheduled-scan logs
-└── launchd/                # launchd plist source (macOS)
+└── logs/                   # Scheduled-scan logs
 ```
 
 ---
 
 ## Development
 
-### Prerequisites
-
-- Go 1.21+ (to rebuild scanner binaries from source)
-- Python 3.8+
-- shellcheck (for linting shell scripts)
-
-### Commands
-
 ```bash
-make lint     # Check shell scripts
-make check   # Verify installation health
-make build   # Download binaries for current arch
-make release # Build release tarballs for all archs
-make clean   # Remove downloaded binaries
-```
-
-### Building from source
-
-The scanner binaries (`cfst` and `senpaiscanner`) are pre-built Go programs. To rebuild them:
-
-```bash
-git clone https://github.com/XIU2/CloudflareSpeedTest
-cd CloudflareSpeedTest && go build -o ../tunnel/bin/cfst
-
-git clone https://github.com/MatinSenPai/SenPaiScanner
-cd SenPaiScanner && go build -o ../tunnel/bin/senpaiscanner
+make build       # Compile scanners for current arch
+make release     # Build release tarballs for all platforms
+make check       # Verify installation health
+make lint        # Shellcheck
+make clean       # Remove compiled binaries
 ```
 
 ---
 
-## Notes
+## Credits
 
-- **macOS Gatekeeper:** First run may be blocked. Run `xattr -d com.apple.quarantine bin/cfst bin/senpaiscanner` if needed.
-- **Network scanning:** CFST sends up to 200 concurrent probes. On a home/laptop network this is fine; on a server it may trip abuse alarms.
-- **Speed = 0 MB/s:** Means no download test was run (`-dd` flag). Use default `scan` mode for speed data.
-- **SenPaiScanner is TUI-only:** Requires a TTY; won't work from `launchd` or cron.
-- All scans run as your user — no root privileges needed.
+tunnel is a **wrapper / orchestrator** that builds on these excellent open-source projects:
+
+### CloudflareSpeedTest (cfst) — [XIU2/CloudflareSpeedTest](https://github.com/XIU2/CloudflareSpeedTest)
+
+The headless batch scanner. Probes thousands of Cloudflare IPs in parallel
+using TCPing or HTTPing, measures latency, packet loss, and download speed,
+then outputs a ranked CSV. Licensed under GPL-3.0.
+
+- **Author:** XIU2
+- **Version bundled:** v2.3.5
+- **License:** GPL-3.0
+
+### SenPaiScanner — [MatinSenPai/SenPaiScanner](https://github.com/MatinSenPai/SenPaiScanner)
+
+The interactive TUI scanner. Provides a full terminal UI for live
+scanning with custom configs, Xray validation, and neighbor discovery.
+Licensed under GPL-3.0.
+
+- **Author:** MatinSenPai
+- **Version bundled:** v0.5.0
+- **License:** GPL-3.0
+
+### How tunnel relates to these projects
+
+tunnel does **not** fork or modify the upstream scanners. It:
+
+1. Downloads or compiles the upstream binaries
+2. Wraps them with a unified CLI (`tunnel scan`, `tunnel senpai`)
+3. Ingests their CSV output into a SQLite database
+4. Provides query (`tunnel top`), export (`tunnel export`), and history
+   (`tunnel history`) commands on top of the stored data
+
+Think of tunnel as **glue** — it wires together purpose-built scanning
+engines with a local database and a convenient command-line interface.
 
 ---
 
 ## License
 
-[MIT](LICENSE)
+tunnel itself is [MIT](LICENSE). The bundled scanner binaries are
+GPL-3.0 licensed (see [Credits](#credits) above).

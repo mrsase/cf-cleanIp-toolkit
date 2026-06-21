@@ -8,43 +8,41 @@ SHELL    = /usr/bin/env bash
 
 help: ## show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "$(CYAN)%-20s$(NC) %s\n", $$1, $$2}'
-NC  = \033[0m
-CYAN= \033[0;36m
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[0;36m%-20s\033[0m %s\n", $$1, $$2}'
 
-install: ## run the install script (detects arch, downloads deps, sets up PATH)
+install: ## run the install script (download or compile, setup PATH)
 	./install.sh
 
-build: ## download scanner binaries for the current architecture
-	./scripts/prepare-release.sh --current-only
+build: ## compile cfst + senpaiscanner from upstream source for current arch
+	./scripts/build-scanners.sh
 
-release: ## download binaries for all supported architectures (for GitHub releases)
-	./scripts/prepare-release.sh --all
+release: ## build release tarballs for all platforms (use before publishing)
+	./scripts/build-scanners.sh --all --package
 
-release/tunnel-$(VERSION)-%.tar.gz: ## build a single release tarball (use: make release/tunnel-1.0.0-darwin-amd64.tar.gz)
+release/tunnel-$(VERSION)-%.tar.gz: ## build a single-platform release tarball
 	@os_arch="$*"; \
 	os=$${os_arch%-*}; arch=$${os_arch#*-}; \
-	echo "Packaging $$os/$$arch..."; \
-	./scripts/prepare-release.sh --os "$$os" --arch "$$arch"
+	echo "Building $$os/$$arch..."; \
+	./scripts/build-scanners.sh --os "$$os" --arch "$$arch" --package --dest "$(CURDIR)/release"
 
-clean: ## remove downloaded binaries
+clean: ## remove compiled binaries
 	rm -f bin/cfst bin/senpaiscanner
-	@echo "[clean] Binaries removed. Re-run 'make build' or 'make install' to fetch them."
+	rm -rf release/
+	@echo "[clean] done"
 
 lint: ## check shell scripts with shellcheck
 	@if command -v shellcheck &>/dev/null; then \
 		shellcheck tunnel install.sh scripts/*.sh launchd/*.plist 2>/dev/null || true; \
 		echo "[lint] done"; \
 	else \
-		echo "[lint] shellcheck not installed — skipping (brew install shellcheck)"; \
+		echo "[lint] shellcheck not installed — skipping"; \
 	fi
 
-check: ## verify the project is in a healthy state
+check: ## verify the project is healthy
 	@echo "[check] cfst:  $$(test -x bin/cfst && (bin/cfst -v 2>&1 | head -1) || echo MISSING)"
 	@echo "[check] senpai: $$(test -x bin/senpaiscanner && echo present || echo MISSING)"
 	@echo "[check] db:    $$(test -f db/clean_ips.db && du -h db/clean_ips.db | cut -f1 || echo MISSING)"
 	@echo "[check] ranges: v4=$$(wc -l < data/ip.txt 2>/dev/null || echo 0)  v6=$$(wc -l < data/ipv6.txt 2>/dev/null || echo 0)"
 
 version: ## show version info
-	@echo "$(PROJECT) v$(VERSION)"
-	@echo "os/arch: $$(uname -s)/$$(uname -m)"
+	@./scripts/version.sh

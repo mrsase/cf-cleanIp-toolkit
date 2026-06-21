@@ -25,7 +25,7 @@ release/cf-cleanIp-toolkit-$(VERSION)-%.tar.gz: ## build a single-platform relea
 	echo "Building $$os/$$arch..."; \
 	./scripts/build-scanners.sh --os "$$os" --arch "$$arch" --package --dest "$(CURDIR)/release"
 
-clean: ## remove compiled binaries
+clean: ## remove compiled binaries and release tarballs
 	rm -f bin/cfst bin/senpaiscanner
 	rm -rf release/
 	@echo "[clean] done"

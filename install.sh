@@ -19,12 +19,6 @@ PROJECT_VERSION="$(cat "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/VERSION" 2
 GITHUB_USER="${GITHUB_USER:-mrsase}"  # set to your GitHub org/username for release downloads
 RELEASE_BASE="https://github.com/${GITHUB_USER}/${PROJECT}/releases/download/v${PROJECT_VERSION}"
 
-# --- Upstream repos (for source compilation) ---
-CFST_VERSION="v2.3.5"
-CFST_REPO="XIU2/CloudflareSpeedTest"
-SENPAI_VERSION="v0.5.0"
-SENPAI_REPO="MatinSenPai/SenPaiScanner"
-
 # --- Colors ---
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
 info()  { printf "${GREEN}[INFO]${NC}  %s\n" "$*"; }

@@ -13,7 +13,7 @@ CFST_REPO="XIU2/CloudflareSpeedTest"
 SENPAI_VERSION="v0.5.0"
 SENPAI_REPO="MatinSenPai/SenPaiScanner"
 
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { printf "${GREEN}[INFO]${NC}  %s\n" "$*"; }
 warn()  { printf "${YELLOW}[WARN]${NC}  %s\n" "$*"; }
 error() { printf "${RED}[ERROR]${NC} %s\n" "$*"; }
@@ -71,7 +71,7 @@ build_scanners() {
     )
     chmod +x "$dest/senpaiscanner"
 
-    rm -rf "$tmpdir"
+    chmod -R +w "$tmpdir" 2>/dev/null; rm -rf "$tmpdir"
     info "Build complete"
 }
 
@@ -129,7 +129,7 @@ main() {
                 echo "       $0 --all [--package]"
                 echo ""
                 echo "  --os,--arch     Target platform (default: current)"
-                echo "  --dest <dir>    Output directory (default: bin/)"
+                echo "  --dest <dir>    Output directory (default: bin/; with --package: release/)"
                 echo "  --package       Create release tarball in <dest>"
                 echo "  --all           Build for all supported platforms"
                 echo ""
@@ -157,7 +157,10 @@ main() {
 
     if [[ "$pkg" == 1 ]]; then
         local tarball
+        [[ "$dest" == "$ROOT/bin" ]] && dest="$ROOT/release"
+        mkdir -p "$dest"
         tarball="$(package_release "$opt_os" "$opt_arch" "$dest")"
+        tarball_name="$(basename "$tarball")"
         info "Release tarball: $tarball ($(du -h "$tarball" | cut -f1))"
     else
         build_scanners "$dest"

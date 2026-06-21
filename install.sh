@@ -16,7 +16,7 @@ PROJECT_VERSION="$(cat "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/VERSION" 2
 
 # --- GitHub (for downloading pre-compiled releases) ---
 # Change these if you fork the project.
-GITHUB_USER="${GITHUB_USER:-}"  # empty means unknown — source compile will be used
+GITHUB_USER="${GITHUB_USER:-mrsase}"  # set to your GitHub org/username for release downloads
 RELEASE_BASE="https://github.com/${GITHUB_USER}/${PROJECT}/releases/download/v${PROJECT_VERSION}"
 
 # --- Upstream repos (for source compilation) ---

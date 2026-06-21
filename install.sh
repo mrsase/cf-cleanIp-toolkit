@@ -11,7 +11,7 @@
 #   ./install.sh --no-path    # skip PATH setup
 set -euo pipefail
 
-PROJECT="tunnel"
+PROJECT="cf-cleanIp-toolkit"
 PROJECT_VERSION="$(cat "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/VERSION" 2>/dev/null || echo "1.0.0")"
 
 # --- GitHub (for downloading pre-compiled releases) ---
@@ -110,7 +110,7 @@ ensure_binaries() {
     fi
 
     # Strategy A: download a pre-built release tarball from GitHub
-    local tarball_url="${RELEASE_BASE}/tunnel-${LABEL}.tar.gz"
+    local tarball_url="${RELEASE_BASE}/${PROJECT}-${LABEL}.tar.gz"
     local tmpdir
     tmpdir="$(mktemp -d)"
     local fetched=0
@@ -118,8 +118,8 @@ ensure_binaries() {
     if [[ -n "$GITHUB_USER" ]] && download "$tarball_url" "$tmpdir/release.tar.gz" 2>/dev/null; then
         info "Downloaded pre-built release for ${LABEL}"
         tar -xzf "$tmpdir/release.tar.gz" -C "$tmpdir"
-        cp "$tmpdir/tunnel-${LABEL}/bin/cfst" "$BIN_DIR/" 2>/dev/null || true
-        cp "$tmpdir/tunnel-${LABEL}/bin/senpaiscanner" "$BIN_DIR/" 2>/dev/null || true
+        cp "$tmpdir/${PROJECT}-${LABEL}/bin/cfst" "$BIN_DIR/" 2>/dev/null || true
+        cp "$tmpdir/${PROJECT}-${LABEL}/bin/senpaiscanner" "$BIN_DIR/" 2>/dev/null || true
         chmod +x "$BIN_DIR/cfst" "$BIN_DIR/senpaiscanner" 2>/dev/null || true
         if binary_works "$BIN_DIR/cfst" && binary_works "$BIN_DIR/senpaiscanner"; then
             fetched=1
@@ -206,11 +206,11 @@ setup_path() {
     fi
 
     case "$answer" in
-        n|N|no|NO) warn "Skipped. Use './tunnel <cmd>' or add manually." ;;
+        n|N|no|NO) warn "Skipped. Use './cf-cleanIp-toolkit <cmd>' or add manually." ;;
         *)
             echo "" >> "$shell_rc"
             echo "$path_line" >> "$shell_rc"
-            info "Added to $shell_rc — run 'source $shell_rc' then use 'tunnel' from anywhere"
+            info "Added to $shell_rc — run 'source $shell_rc' then use 'cf-cleanIp-toolkit' from anywhere"
             ;;
     esac
 }
@@ -223,10 +223,10 @@ print_summary() {
     echo "  Platform  : $OS / $ARCH"
     echo ""
     echo "  Quick start:"
-    echo "    ${CYAN}./tunnel scan${NC}                # Run a scan"
-    echo "    ${CYAN}./tunnel top${NC}                 # View best IPs"
-    echo "    ${CYAN}./tunnel status${NC}              # System overview"
-    echo "    ${CYAN}./tunnel help${NC}                # All commands"
+    echo "    ${CYAN}./cf-cleanIp-toolkit scan${NC}     # Run a scan"
+    echo "    ${CYAN}./cf-cleanIp-toolkit top${NC}      # View best IPs"
+    echo "    ${CYAN}./cf-cleanIp-toolkit status${NC}   # System overview"
+    echo "    ${CYAN}./cf-cleanIp-toolkit help${NC}     # All commands"
     echo ""
     grep -qF "$ROOT" "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" 2>/dev/null && \
         echo "  PATH: active (restart shell or 'source ~/.<rc>')"

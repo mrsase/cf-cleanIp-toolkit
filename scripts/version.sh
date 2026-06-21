@@ -7,7 +7,7 @@ VERSION="$(cat "$ROOT/VERSION" 2>/dev/null || echo "unknown")"
 CFST_VER="$("$ROOT/bin/cfst" -v 2>&1 | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "not installed")"
 SENPAI_VER="$("$ROOT/bin/senpaiscanner" -v 2>&1 | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "not installed")"
 
-echo "tunnel v${VERSION}"
+echo "cf-cleanIp-toolkit v${VERSION}"
 echo "  os/arch       : $(uname -s)/$(uname -m)"
 echo "  cfst          : ${CFST_VER}"
 echo "  senpaiscanner : ${SENPAI_VER}"

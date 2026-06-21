@@ -1,5 +1,5 @@
 VERSION ?= $(shell cat VERSION 2>/dev/null || echo "1.0.0")
-PROJECT  = tunnel
+PROJECT  = cf-cleanIp-toolkit
 SHELL    = /usr/bin/env bash
 
 .DEFAULT_GOAL := help
@@ -19,7 +19,7 @@ build: ## compile cfst + senpaiscanner from upstream source for current arch
 release: ## build release tarballs for all platforms (use before publishing)
 	./scripts/build-scanners.sh --all --package
 
-release/tunnel-$(VERSION)-%.tar.gz: ## build a single-platform release tarball
+release/cf-cleanIp-toolkit-$(VERSION)-%.tar.gz: ## build a single-platform release tarball
 	@os_arch="$*"; \
 	os=$${os_arch%-*}; arch=$${os_arch#*-}; \
 	echo "Building $$os/$$arch..."; \
@@ -32,7 +32,7 @@ clean: ## remove compiled binaries
 
 lint: ## check shell scripts with shellcheck
 	@if command -v shellcheck &>/dev/null; then \
-		shellcheck tunnel install.sh scripts/*.sh launchd/*.plist 2>/dev/null || true; \
+		shellcheck cf-cleanIp-toolkit install.sh scripts/*.sh launchd/*.plist 2>/dev/null || true; \
 		echo "[lint] done"; \
 	else \
 		echo "[lint] shellcheck not installed — skipping"; \

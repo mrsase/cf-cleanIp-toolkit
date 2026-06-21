@@ -15,5 +15,5 @@ fi
 echo "[senpai] starting $($SCANNER --version 2>/dev/null || echo SenPaiScanner)"
 echo "[senpai] tip: in Custom Scan, set Output to:"
 echo "         $ROOT/results/senpai/senpai_$(date -u +%Y%m%dT%H%M%SZ).csv"
-echo "         then run: tunnel ingest <that-file> --engine senpai"
+echo "         then run: cf-cleanIp-toolkit ingest <that-file> --engine senpai"
 exec "$SCANNER" "$@"

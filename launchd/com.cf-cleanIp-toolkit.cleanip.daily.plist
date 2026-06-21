@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.tunnel.cleanip.daily</string>
+    <string>com.cf-cleanIp-toolkit.cleanip.daily</string>
 
     <key>ProgramArguments</key>
     <array>

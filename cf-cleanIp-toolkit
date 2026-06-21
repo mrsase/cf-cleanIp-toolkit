@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cloudflare Clean IP toolkit dispatcher.
+# cf-cleanIp-toolkit — Cloudflare Clean IP toolkit dispatcher.
 #
 # Subcommands:
 #   scan       [args...]   Run a CFST scan and store results in SQLite
@@ -34,7 +34,7 @@ case "$cmd" in
         exec $PYTHON "$SCRIPTS/history.py" "$@" ;;
     ingest)
         if [[ $# -lt 1 ]]; then
-            echo "usage: tunnel ingest <csv> [--engine cfst|senpai|manual] [extras...]" >&2
+            echo "usage: cf-cleanIp-toolkit ingest <csv> [--engine cfst|senpai|manual] [extras...]" >&2
             exit 2
         fi
         csv="$1"; shift
@@ -50,8 +50,8 @@ case "$cmd" in
             echo "install: this command is only available on macOS (launchd)" >&2
             exit 1
         fi
-        plist_src="$ROOT/launchd/com.tunnel.cleanip.daily.plist"
-        plist_dst="$HOME/Library/LaunchAgents/com.tunnel.cleanip.daily.plist"
+        plist_src="$ROOT/launchd/com.cf-cleanIp-toolkit.cleanip.daily.plist"
+        plist_dst="$HOME/Library/LaunchAgents/com.cf-cleanIp-toolkit.cleanip.daily.plist"
         action="${1:-load}"
         if [[ "$action" == "unload" ]]; then
             launchctl unload "$plist_dst" 2>/dev/null && echo "[install] unloaded $plist_dst" \
@@ -65,9 +65,9 @@ case "$cmd" in
         launchctl load "$plist_dst"
         echo "[install] loaded launchd agent: $plist_dst"
         echo "         runs daily at 04:17"
-        launchctl list | grep tunnel || true ;;
+        launchctl list | grep cf-cleanIp-toolkit || true ;;
     status)
-        echo "== tunnel clean-ip system =="
+        echo "== cf-cleanIp-toolkit =="
         echo "ROOT       : $ROOT"
         echo "version    : $(cat "$ROOT/VERSION" 2>/dev/null || echo '?')"
         echo "cfst       : $(test -x "$ROOT/bin/cfst" && (CFST_VER=$("$ROOT/bin/cfst" -v 2>&1 | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1); echo "${CFST_VER:-present}") || echo MISSING)"
@@ -76,11 +76,11 @@ case "$cmd" in
         echo "ranges     : v4=$(wc -l < "$ROOT/data/ip.txt" 2>/dev/null || echo ?)  v6=$(wc -l < "$ROOT/data/ipv6.txt" 2>/dev/null || echo ?)"
         echo "launchd    : $(launchctl list | grep -i cleanip || echo not-installed)"
         echo
-        $PYTHON "$SCRIPTS/history.py" -n 5 2>/dev/null || echo "(no scans yet - run: tunnel scan)" ;;
+        $PYTHON "$SCRIPTS/history.py" -n 5 2>/dev/null || echo "(no scans yet - run: cf-cleanIp-toolkit scan)" ;;
     version|--version)
         exec "$SCRIPTS/version.sh" "$@" ;;
     help|-h|--help|"")
-        echo "tunnel — Cloudflare Clean IP Toolkit"
+        echo "cf-cleanIp-toolkit — Cloudflare Clean IP Toolkit"
         echo ""
         echo "Subcommands:"
         echo "  scan       [args...]   Run a CFST scan and store results in SQLite"

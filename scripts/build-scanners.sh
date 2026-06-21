@@ -7,7 +7,7 @@
 #   - make release  (compile for all archs and package tarballs)
 set -euo pipefail
 
-PROJECT="tunnel"
+PROJECT="cf-cleanIp-toolkit"
 CFST_VERSION="v2.3.5"
 CFST_REPO="XIU2/CloudflareSpeedTest"
 SENPAI_VERSION="v0.5.0"
@@ -88,7 +88,7 @@ package_release() {
     build_scanners "$pkg_dir/bin"
 
     # Copy project files
-    cp "$ROOT/tunnel" "$pkg_dir/"
+    cp "$ROOT/cf-cleanIp-toolkit" "$pkg_dir/"
     cp "$ROOT/VERSION" "$pkg_dir/"
     cp "$ROOT/LICENSE" "$pkg_dir/"
     cp "$ROOT/install.sh" "$pkg_dir/"

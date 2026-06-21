@@ -82,13 +82,20 @@ case "$cmd" in
     help|-h|--help|"")
         echo "tunnel — Cloudflare Clean IP Toolkit"
         echo ""
-        sed -n '3,15p' "$0"
+        echo "Subcommands:"
+        echo "  scan       [args...]   Run a CFST scan and store results in SQLite"
+        echo "  senpai     [args...]   Launch SenPaiScanner TUI (interactive only)"
+        echo "  top        [args...]   Print top-N clean IPs (see scripts/top.py --help)"
+        echo "  export     [args...]   Export stored IPs to JSON / CSV / TXT"
+        echo "  history    [args...]   Show scan history & DB stats"
+        echo "  ingest     <csv>       Ingest an arbitrary CFST-style CSV"
+        echo "  update     [ranges]    Refresh Cloudflare IP range files"
+        echo "  install    [unload]    (un)load the daily launchd agent"
+        echo "  status                 Quick overview of the system"
+        echo "  version                Show version info"
+        echo "  help                   Show this message"
         echo ""
-        echo "Additional commands:"
-        echo "  install              Run the system installer (detects arch, downloads deps)"
-        echo "  version              Show version info"
-        echo ""
-        echo "See README.md or ./tunnel help for details." ;;
+        echo "See README.md for full documentation." ;;
     *)
         echo "unknown subcommand: $cmd" >&2
         sed -n '3,15p' "$0"

@@ -67,7 +67,7 @@ build_scanners() {
     git clone --depth 1 --branch "$SENPAI_VERSION" "https://github.com/${SENPAI_REPO}.git" "$tmpdir/senpai" 2>/dev/null
     (
         cd "$tmpdir/senpai"
-        go build -ldflags="-s -w" -o "$dest/senpaiscanner" .
+        go build -ldflags="-s -w" -o "$dest/senpaiscanner" ./cmd/senpaiscanner/
     )
     chmod +x "$dest/senpaiscanner"
 

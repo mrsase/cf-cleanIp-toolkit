@@ -41,7 +41,7 @@ trends over days and weeks.
 ### Option A — Download a release (recommended)
 
 Grab the tarball for your platform from the
-[Releases page](https://github.com/<your-org>/cf-cleanIp-toolkit/releases), then:
+[Releases page](https://github.com/mrsase/cf-cleanIp-toolkit/releases), then:
 
 ```bash
 tar -xzf cf-cleanIp-toolkit-<your-os>-<your-arch>.tar.gz
@@ -54,7 +54,7 @@ The tarball comes with pre-compiled binaries — no Go toolchain needed.
 ### Option B — Build from source
 
 ```bash
-git clone https://github.com/<your-org>/cf-cleanIp-toolkit.git
+git clone https://github.com/mrsase/cf-cleanIp-toolkit.git
 cd cf-cleanIp-toolkit
 ./install.sh           # compiles cfst + senpaiscanner from upstream source
 ```

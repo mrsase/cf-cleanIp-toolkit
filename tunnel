@@ -70,7 +70,7 @@ case "$cmd" in
         echo "== tunnel clean-ip system =="
         echo "ROOT       : $ROOT"
         echo "version    : $(cat "$ROOT/VERSION" 2>/dev/null || echo '?')"
-        echo "cfst       : $(test -x "$ROOT/bin/cfst" && (CFST_VER=$("$ROOT/bin/cfst" -v 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1); echo "${CFST_VER:-present}") || echo MISSING)"
+        echo "cfst       : $(test -x "$ROOT/bin/cfst" && (CFST_VER=$("$ROOT/bin/cfst" -v 2>&1 | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1); echo "${CFST_VER:-present}") || echo MISSING)"
         echo "senpai     : $(test -x "$ROOT/bin/senpaiscanner" && echo present || echo MISSING)"
         echo "db file    : $ROOT/db/clean_ips.db ($([[ -f "$ROOT/db/clean_ips.db" ]] && du -h "$ROOT/db/clean_ips.db" | cut -f1 || echo not-yet-created))"
         echo "ranges     : v4=$(wc -l < "$ROOT/data/ip.txt" 2>/dev/null || echo ?)  v6=$(wc -l < "$ROOT/data/ipv6.txt" 2>/dev/null || echo ?)"

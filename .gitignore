@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Project-specific
+/tmp/
+/release/
+/exports/*.json
+/exports/*.csv
+/exports/*.txt
+/logs/*.log
+/logs/*.err
+/results/cfst/*.csv
+/results/senpai/*.csv
+/db/clean_ips.db
+/db/clean_ips.db-wal
+/db/clean_ips.db-shm
+/data/ip.txt
+/data/ipv6.txt

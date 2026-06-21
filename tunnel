@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Cloudflare Clean IP toolkit dispatcher.
+#
+# Subcommands:
+#   scan       [args...]   Run a CFST scan and store results in SQLite
+#   senpai     [args...]   Launch SenPaiScanner TUI (interactive only)
+#   top        [args...]   Print top-N clean IPs (see scripts/top.py --help)
+#   export     [args...]   Export stored IPs to JSON / CSV / TXT
+#   history    [args...]   Show scan history & DB stats
+#   ingest     <csv>       Ingest an arbitrary CFST-style CSV
+#   update     [ranges]    Refresh Cloudflare IP range files
+#   install    [unload]    (un)load the daily launchd agent
+#   status                 Quick overview of the system
+#   help                   Show this message
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTS="$ROOT/scripts"
+PYTHON="${PYTHON:-/usr/bin/env python3}"
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+    scan)
+        exec "$SCRIPTS/scan.sh" "$@" ;;
+    senpai)
+        exec "$SCRIPTS/senpai.sh" "$@" ;;
+    top)
+        exec $PYTHON "$SCRIPTS/top.py" "$@" ;;
+    export)
+        exec $PYTHON "$SCRIPTS/export.py" "$@" ;;
+    history|stats)
+        exec $PYTHON "$SCRIPTS/history.py" "$@" ;;
+    ingest)
+        if [[ $# -lt 1 ]]; then
+            echo "usage: tunnel ingest <csv> [--engine cfst|senpai|manual] [extras...]" >&2
+            exit 2
+        fi
+        csv="$1"; shift
+        exec $PYTHON "$SCRIPTS/store.py" --csv "$csv" "$@" ;;
+    update)
+        target="${1:-ranges}"
+        case "$target" in
+            ranges) exec "$SCRIPTS/update-ranges.sh" ;;
+            *) echo "unknown update target: $target" >&2; exit 2 ;;
+        esac ;;
+    install)
+        if [[ "$(uname -s)" != "Darwin" ]]; then
+            echo "install: this command is only available on macOS (launchd)" >&2
+            exit 1
+        fi
+        plist_src="$ROOT/launchd/com.tunnel.cleanip.daily.plist"
+        plist_dst="$HOME/Library/LaunchAgents/com.tunnel.cleanip.daily.plist"
+        action="${1:-load}"
+        if [[ "$action" == "unload" ]]; then
+            launchctl unload "$plist_dst" 2>/dev/null && echo "[install] unloaded $plist_dst" \
+                || echo "[install] nothing to unload"
+            rm -f "$plist_dst"
+            exit 0
+        fi
+        mkdir -p "$(dirname "$plist_dst")"
+        sed -e "s|__ROOT__|$ROOT|g" "$plist_src" > "$plist_dst"
+        launchctl unload "$plist_dst" 2>/dev/null || true
+        launchctl load "$plist_dst"
+        echo "[install] loaded launchd agent: $plist_dst"
+        echo "         runs daily at 04:17"
+        launchctl list | grep tunnel || true ;;
+    status)
+        echo "== tunnel clean-ip system =="
+        echo "ROOT       : $ROOT"
+        echo "version    : $(cat "$ROOT/VERSION" 2>/dev/null || echo '?')"
+        echo "cfst       : $(test -x "$ROOT/bin/cfst" && (CFST_VER=$("$ROOT/bin/cfst" -v 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1); echo "${CFST_VER:-present}") || echo MISSING)"
+        echo "senpai     : $(test -x "$ROOT/bin/senpaiscanner" && echo present || echo MISSING)"
+        echo "db file    : $ROOT/db/clean_ips.db ($([[ -f "$ROOT/db/clean_ips.db" ]] && du -h "$ROOT/db/clean_ips.db" | cut -f1 || echo not-yet-created))"
+        echo "ranges     : v4=$(wc -l < "$ROOT/data/ip.txt" 2>/dev/null || echo ?)  v6=$(wc -l < "$ROOT/data/ipv6.txt" 2>/dev/null || echo ?)"
+        echo "launchd    : $(launchctl list | grep -i cleanip || echo not-installed)"
+        echo
+        $PYTHON "$SCRIPTS/history.py" -n 5 2>/dev/null || echo "(no scans yet - run: tunnel scan)" ;;
+    version|--version)
+        exec "$SCRIPTS/version.sh" "$@" ;;
+    help|-h|--help|"")
+        echo "tunnel — Cloudflare Clean IP Toolkit"
+        echo ""
+        sed -n '3,15p' "$0"
+        echo ""
+        echo "Additional commands:"
+        echo "  install              Run the system installer (detects arch, downloads deps)"
+        echo "  version              Show version info"
+        echo ""
+        echo "See README.md or ./tunnel help for details." ;;
+    *)
+        echo "unknown subcommand: $cmd" >&2
+        sed -n '3,15p' "$0"
+        exit 2 ;;
+esac
